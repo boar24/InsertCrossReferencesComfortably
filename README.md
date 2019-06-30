@@ -41,7 +41,7 @@ How about that instead:
 4) Additional function:  
    By default, numerical references are inserted (e.g. "Figure 123").   
    When you press the keyboard shortcut when the cursor is already in a cross reference field,  
-   - that field is toggled between <numerical reference> and <text reference> (e.g. "Overview")  
+   - that field is toggled between \<numerical reference> (e.g. "Figure 123") and \<text reference> (e.g. "Overview")  
    - subsequently added cross references will use the latest format (persistent until Word is exited)  
   
 Limitations:
