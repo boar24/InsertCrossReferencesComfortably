@@ -14,7 +14,7 @@ How about that instead:
 - Press the hotkey again => the cursor jumps back to the original location and the crossref is inserted
 
   
-![kdkdk](https://github.com/Traveler4/InsertCrossReferencesComfortably/blob/master/Screenshot.png)
+![Screenshot](https://github.com/Traveler4/InsertCrossReferencesComfortably/blob/master/Screenshot.png)
 
   
 ## Preparation:  
