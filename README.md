@@ -53,11 +53,10 @@ However, item 1. from the 'Proper way' is mandatory.
    A temporary bookmark is inserted (if their display is enabled, grey square brackets will appear).  
 2) Move the cursor to the location to where the crossref shall point.  <br>
    Supported are:  
-   - Headlines  
-   - Subtitles of Figures realised via { SEQ Figure}, e.g. "Figure 123", "Figure 12-345"  
-   - Subtitles of Tables  realised via { SEQ Table} , e.g. "Table 123", "Table 12-345"  
-   - References to documents realised via { SEQ Ref}, e.g. "[42]"  
-   _Recommendation for large documents:_ use the navigation pane (View -> Navigation -> Headlines)   
+   - Bookmarks
+   - Subtitles of Figures, Abbildungen, Tables, Tabellen etc.
+   - Headlines  <br>
+Recommendation for quickly jumping to headlines in large documents: use the navigation pane (View -> Navigation -> Headlines)   
 3) Press the keyboard shortcut again.  <br>
    The cursor will jump back to the location of insertion and the crossref will be inserted. <br>
    Done!  
