@@ -31,7 +31,7 @@ However, item 1) from the 'Proper way' is mandatory.
  2) Put the macro code in a VBA module in your document or document template.<br>
     It is recommended to put it into _normal.dot_, 
     then the functionality is available in any document.<br>
- 3) Assign a keyboard shortcut to this macro (recommendation: AltGr-Q)<br>
+ 3) Assign a keyboard shortcut to this macro (recommendation: Ctrl+Alt+Q)<br>
     This works like this (Office 2010):
       - File -> Options -> Adapt Ribbon -> Keyboard Shortcuts: Modify...<br>
       - Select from Categories: Macros<br>
