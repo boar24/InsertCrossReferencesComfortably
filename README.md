@@ -22,7 +22,7 @@ You can configure multiple formats and toggle between them.
   
 ## Preparation:  
 ### Quick way: 
-Download the _Example file.docm_ (including macro) and play around with it. <br>
+Download the _Example file.docm_ (including macro), open it and play around with it. <br>
 However, item 1) from the 'Proper way' is mandatory.
 ### Proper way:
 1) Make sure, the following References are ticked in the VBA editor:<br>
