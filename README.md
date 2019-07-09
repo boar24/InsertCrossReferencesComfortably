@@ -67,7 +67,7 @@ However, item 1) from the 'Proper way' is mandatory.
    - The field display toggles to the next configured option, e.g. from _see Chapter 1_ to _cf. Introduction_.
    - Subsequently added cross references will use the latest format (persistent until Word is exited).  
   
-Limitations:
+## Limitations:
   * Cross references to hidden text are not possible  
   * The macro may fail trying to cross reference to locations that have heavily been edited (deletions / moves) with "track changes" (markup mode) turned on.   
 
