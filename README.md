@@ -35,7 +35,7 @@ However, item 1. from the 'Proper way' is mandatory.
     This works like this (Office 2010):
       - File -> Options -> Adapt Ribbon -> Keyboard Shortcuts: Modify...<br>
       - Select from Categories: Macros<br>
-      - Select form Macros: [name of the Macro]<br>
+      - Select from Macros: [name of the Macro]<br>
       - Assign keyboard shortcut...<br>
  4) Alternatively to 3) or in addition to the shortcut, you can assign this 
     macro to the ribbon button _Insert -> CrossReference_.<br>
