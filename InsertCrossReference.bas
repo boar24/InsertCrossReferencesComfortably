@@ -1,4 +1,3 @@
-Attribute VB_Name = "InsertCrossReference"
 '***** Purpose *************************************************************
 '
 ' Comfortably insert cross references in MSWord
@@ -235,12 +234,12 @@ Sub InsertCrossReference_(Optional isActiveState As Variant)
     '
     ' Use regex-Syntax to define how to determine subtitles from headers:
     ' ("£" is a special character that will be replaced with the above <subtitleTypes>.)
-    Const subtitleRecog = "((^(£))([\s\xa0]+)(\d+):?([\s\xa0]+)(.*))"
+    Const subtitleRecog = "((^(£))([\s\xa0]+)([-\.\d]+):?([\s\xa0]+)(.*))"
     ' Above example:
     '   To be recognised as a subtitle the string
     '      - must start with one of the keywords in <subtitlTypes>
     '      - be followed by one or more of (whitespaces or character xa0=160=&nbsp;)
-    '      - be followed by one or more digits
+    '      - be followed by one or more digits or dots or minuses (or any combination thereof)
     '      - be followed by zero or one colon
     '      - be followed by one or more of (whitespaces or character xa0=160=&nbsp;)
     '      - be followed by zero or more additional characters
@@ -1877,4 +1876,3 @@ End Function
 ' ============================================================================================
 ' === The end
 ' ============================================================================================
-
