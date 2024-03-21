@@ -1,3 +1,4 @@
+Attribute VB_Name = "InsertCrossReference"
 '***** Purpose *************************************************************
 '
 ' Comfortably insert cross references in MSWord
@@ -96,11 +97,11 @@ Sub InsertCrossReference_(Optional isActiveState As Variant)
     '
     ' Revision History:
     ' 151204 Beginn der Revision History
-    ' 160111 Kann jetzt auch umgehen mit Numerierungen mit Bindestrich à la "Figure 1-1"
-    ' 160112 Jetzt auch Querverweise möglich auf Dokumentenreferenzen à la "[66]" mit Feld " SEQ Ref "
-    ' 160615 Felder werden upgedatet falls nötig
-    ' 180710 Support für "Nummeriertes Element"
-    ' 181026 Generischerer Code für Figure|Table|Abbildung
+    ' 160111 Kann jetzt auch umgehen mit Numerierungen mit Bindestrich Ã  la "Figure 1-1"
+    ' 160112 Jetzt auch Querverweise mÃ¶glich auf Dokumentenreferenzen Ã  la "[66]" mit Feld " SEQ Ref "
+    ' 160615 Felder werden upgedatet falls nÃ¶tig
+    ' 180710 Support fÃ¼r "Nummeriertes Element"
+    ' 181026 Generischerer Code fÃ¼r Figure|Table|Abbildung
     ' 190628 New function: toggle to insert numeric or text references ("\r")
     ' 190629 Explanations and UI changed to English
     ' 190705 More complete and better configurable inserts
@@ -167,7 +168,7 @@ Sub InsertCrossReference_(Optional isActiveState As Variant)
     '   either Field code sequences          (example: <REF \h \r>)
     '   or     text       sequences          (example: <see chapter >).
     ' Text sequences must be enclosed in <'> (example: <' - '>).
-    ' The <£> is used to represent a non-breaking space.
+    ' The <Â£> is used to represent a non-breaking space.
     '
     ' Each Field code sequence can have multiple switches (example: <\h \r>).
     '
@@ -201,19 +202,19 @@ Sub InsertCrossReference_(Optional isActiveState As Variant)
     Dim cfgFigureTE As String                   ' configurations for Figures, Tables, ...
 
     ' Configuration for Headlines:
-    cfgHeadline = "R \r  |REF |R \r '£-£'R  |'(see chapter 'R \r' on page 'PAGEREF')'|R \r ' on p.£'PAGEREF|R \p       "
-    '             "number|text|number°-°text| (see chapter  XX    on page YY       ) |number on p.°XX      |above/below"
+    cfgHeadline = "R \r  |REF |R \r 'Â£-Â£'R  |'(see chapter 'R \r' on page 'PAGEREF')'|R \r ' on p.Â£'PAGEREF|R \p       "
+    '             "number|text|numberÂ°-Â°text| (see chapter  XX    on page YY       ) |number on p.Â°XX      |above/below"
     '
     ' Configuration for Bookmarks:
-    cfgBookmark = "R    |PAGEREF|R \p       |R  ' (see£' R \p    ')'"
-    '             "text |pagenr |above/below|text (see°above/below) "
+    cfgBookmark = "R    |PAGEREF|R \p       |R  ' (seeÂ£' R \p    ')'"
+    '             "text |pagenr |above/below|text (seeÂ°above/below) "
     '
     ' Configuration for Figures, Tables, Equations, ...:
-    cfgFigureTE = "R \r     |R \r    '£-£'R  |R   |P     |R \p       |R \c            |R \#0 "
+    cfgFigureTE = "R \r     |R \r    'Â£-Â£'R  |R   |P     |R \p       |R \c            |R \#0 "
     '             "Figure xx|Figure xx - desc|desc|pagenr|above/below|Figure xxTabdesc|xx    "
 
     ' Favourite configuration of User1:
-'    cfgHeadline = "R \r|'chapter£' R \r|R \r'£-£'R"     ' number | text | number - text
+'    cfgHeadline = "R \r|'chapterÂ£' R \r|R \r'Â£-Â£'R"     ' number | text | number - text
 '    cfgBookmark = "R"                                   ' text   | pagenumber
 '    cfgFigureTE = "R \r"                                ' Fig XX | description | combi
 
@@ -233,8 +234,8 @@ Sub InsertCrossReference_(Optional isActiveState As Variant)
     Const subtitleTypes = "Figure|Fig.|Abbildung|Abb.|Table|Tab.|Tabelle|Equation|Eq.|Gleichung"
     '
     ' Use regex-Syntax to define how to determine subtitles from headers:
-    ' ("£" is a special character that will be replaced with the above <subtitleTypes>.)
-    Const subtitleRecog = "((^(£))([\s\xa0]+)([-\.\d]+):?([\s\xa0]+)(.*))"
+    ' ("Â£" is a special character that will be replaced with the above <subtitleTypes>.)
+    Const subtitleRecog = "((^(Â£))([\s\xa0]+)([-\.\d]+):?([\s\xa0]+)(.*))"
     ' Above example:
     '   To be recognised as a subtitle the string
     '      - must start with one of the keywords in <subtitlTypes>
@@ -261,28 +262,28 @@ Sub InsertCrossReference_(Optional isActiveState As Variant)
     If obj Is Nothing Then
         ' === There is *no* Preference Management.
         ' === Read hard-coded configuration from above into variables ============================
-'        cfgHeadline = Replace(cfgHeadline, "£", Chr$(160))
+'        cfgHeadline = Replace(cfgHeadline, "Â£", Chr$(160))
 '        cfgHeadline = AddDefaults(cfgHeadline, cfgHeadlineAddDefaults)
-'        cfgBookmark = Replace(cfgBookmark, "£", Chr$(160))
+'        cfgBookmark = Replace(cfgBookmark, "Â£", Chr$(160))
 '        cfgBookmark = AddDefaults(cfgBookmark, cfgBookmarkAddDefaults)
-'        cfgFigureTE = Replace(cfgFigureTE, "£", Chr$(160))
+'        cfgFigureTE = Replace(cfgFigureTE, "Â£", Chr$(160))
 '        cfgFigureTE = AddDefaults(cfgFigureTE, cfgFigureTEAddDefaults)
 '        cfgAHeadline = Split(CStr(cfgHeadline), "|")
 '        cfgABookmark = Split(CStr(cfgBookmark), "|")
 '        cfgAFigureTE = Split(CStr(cfgFigureTE), "|")
 
         ' === Chapters:
-        tmpVal = Replace(cfgHeadline, "£", Chr$(160))
+        tmpVal = Replace(cfgHeadline, "Â£", Chr$(160))
         tmpVal = AddDefaults(tmpVal, cfgHeadlineAddDefaults)
         Config("cfgCrRf_Ch_FormatA") = Split(CStr(tmpVal), "|")
 
         ' === Bookmarks:
-        tmpVal = Replace(cfgBookmark, "£", Chr$(160))
+        tmpVal = Replace(cfgBookmark, "Â£", Chr$(160))
         tmpVal = AddDefaults(tmpVal, cfgBookmarkAddDefaults)
         Config("cfgCrRf_BM_FormatA") = Split(CStr(tmpVal), "|")
 
         ' === Figures, Tables, Equations, ...:
-        tmpVal = Replace(cfgFigureTE, "£", Chr$(160))
+        tmpVal = Replace(cfgFigureTE, "Â£", Chr$(160))
         tmpVal = AddDefaults(tmpVal, cfgFigureTEAddDefaults)
         Config("cfgCrRf_ST_FormatA") = Split(CStr(tmpVal), "|")
         Config("cfgCrRf_ST_KeyWd") = Split(subtitleTypes, "|")
@@ -353,7 +354,7 @@ Stop    ' not yet implemented
     ActiveWindow.View.ShowFieldCodes = False
     
     'Debug.Print cfgPHeadline
-    ' Stelle, wo die Referenz eingefügt werden soll:
+    ' Stelle, wo die Referenz eingefÃ¼gt werden soll:
     ' ============================================================================================
     ' === Check if we are in Insertion-Mode or not ===============================================
     If Not (isActive) Then
@@ -384,7 +385,7 @@ Stop    ' not yet implemented
             fText2 = fText0
             fText2 = Replace(fText2, "PAGE", "")        ' change from PAGEREF to REF
             fText2 = RegEx(fText2, "REF\s+(\S+)")       ' get the reference-name
-            needle = Replace(Config("cfgCrRf_ST_KeyRx"), "£", Join(Config("cfgCrRf_ST_KeyWd"), "|"))
+            needle = Replace(Config("cfgCrRf_ST_KeyRx"), "Â£", Join(Config("cfgCrRf_ST_KeyWd"), "|"))
 
             Select Case True
                 ' == It is a subtitle:
@@ -497,7 +498,7 @@ Stop    ' not yet implemented
                     Codetext = UnCAPS(.Range.Fields(i).Code)
                     If ((Left(Codetext, 8) = " SEQ Ref") And _
                         (.Range.Bookmarks.Count = 1)) Then
-                        ' == a) SEQ-numbered item, a bibliographic reference à la <[32] Jackson, 1939, page 37>:
+                        ' == a) SEQ-numbered item, a bibliographic reference Ã  la <[32] Jackson, 1939, page 37>:
                         paramRefType = wdRefTypeBookmark
                         paramRefKind = wdContentText
                         paramRefReal = "Bookmark"
@@ -576,7 +577,7 @@ cannot:
         retry = False
 retryfinding:
         If (found = False) And (retry = False) Then
-            ' Refresh, ohne dass es als Änderung getracked wird:
+            ' Refresh, ohne dass es als Ã„nderung getracked wird:
             storeTrackStatus = ActiveDocument.TrackRevisions
             ActiveDocument.TrackRevisions = False
             Selection.HomeKey Unit:=wdStory
@@ -609,7 +610,7 @@ retryfinding:
             GoTo retryfinding
         End If
 
-        ' Jetzt das eigentliche Einfügen des Querverweises an der ursprünglichen Stelle:
+        ' Jetzt das eigentliche EinfÃ¼gen des Querverweises an der ursprÃ¼nglichen Stelle:
         Selection.GoTo what:=wdGoToBookmark, Name:="tempforInsert"
         If found = True Then
             ' Read the correct array the currently selected options:
@@ -1237,7 +1238,7 @@ Function strPrepare(string1 As String, Optional withBlanks As Boolean = True) As
     '   a) strip away comments
     '   b) remove line breaks
     '   c) break into individual configs
-    '   d) Treat the special character <£> vs <\£>
+    '   d) Treat the special character <Â£> vs <\Â£>
     '   e) Treat escaped <apo>s
     '   f) Trim to have one blank at beginning and end of each line
     
@@ -1252,10 +1253,10 @@ Function strPrepare(string1 As String, Optional withBlanks As Boolean = True) As
     '       Thus we replace the <|> (if they are not literals) by <vbNewLine>
     string1 = strReplaceNonLits(string1, "|", vbNewLine)
     
-    '   d) Treat the special character <£> / <\£>
-    '       Treat <£> (representing protected blank Chr$(160)) and <\£> (representing literal <£>):
-    string1 = Replace(string1, "£", Chr(160))           ' replace <£> by protected blank
-    string1 = Replace(string1, "\" & Chr(160), "£")     ' if the <£> was escaped (<\£>), restore it back to the pound <£>
+    '   d) Treat the special character <Â£> / <\Â£>
+    '       Treat <Â£> (representing protected blank Chr$(160)) and <\Â£> (representing literal <Â£>):
+    string1 = Replace(string1, "Â£", Chr(160))           ' replace <Â£> by protected blank
+    string1 = Replace(string1, "\" & Chr(160), "Â£")     ' if the <Â£> was escaped (<\Â£>), restore it back to the pound <Â£>
     
     '   e) Treat escaped <apo>s
     string1 = Replace(string1, "\" & "'", "'")
@@ -1292,14 +1293,14 @@ Private Sub test_strPrepare()
         "    R \r  |    ""eol comment" & vbNewLine & _
         """2: text|" & vbNewLine & _
         "    REF |" & vbNewLine & _
-        """3: number°-°text" & vbNewLine & _
-        "    R \r '£-£'R  |" & vbNewLine & _
-        "    R \r '£""|\£¦ - £ 'R  |" & vbNewLine & _
-        "    R \r '£""|\£\'¦"" - £ 'R  |" & vbNewLine & _
+        """3: numberÂ°-Â°text" & vbNewLine & _
+        "    R \r 'Â£-Â£'R  |" & vbNewLine & _
+        "    R \r 'Â£""|\Â£Â¦ - Â£ 'R  |" & vbNewLine & _
+        "    R \r 'Â£""|\Â£\'Â¦"" - Â£ 'R  |" & vbNewLine & _
         """4: (see chapter  XX    on page YY   )" & vbNewLine & _
         "   '(see chapter 'R \r' on page 'PAGEREF')'|" & vbNewLine & _
-        """5: number on p.°XX" & vbNewLine & _
-        "    R \r ' on p.£'PAGEREF" & vbNewLine & _
+        """5: number on p.Â°XX" & vbNewLine & _
+        "    R \r ' on p.Â£'PAGEREF" & vbNewLine & _
         """(6) above/below" & vbNewLine & _
         "|    R \p" & vbNewLine & _
         ""
@@ -1329,9 +1330,9 @@ Private Sub test_strPrepare()
     ' Treat escaped <apo>s:
     s5 = Replace(s5, "\" & "'", "'")
     
-    ' Treat <£> (representing protected blank Chr$(160)) and <\£> (representing literal <£>):
-    s6 = Replace(s5, "£", Chr(160))
-    s6 = Replace(s6, "\" & Chr(160), "£")
+    ' Treat <Â£> (representing protected blank Chr$(160)) and <\Â£> (representing literal <Â£>):
+    s6 = Replace(s5, "Â£", Chr(160))
+    s6 = Replace(s6, "\" & Chr(160), "Â£")
     Debug.Print s6
     
     ' Trim:
@@ -1565,8 +1566,8 @@ End Function
 ' === Regex
 ' ============================================================================================
 Function RegExReplace(Quelle As Variant, Expression As Variant, replacement As Variant, Optional multiline As Boolean = False) As String
-    ' Beispiel für einen Aufruf:
-    ' (würde bei mehrfachen Backslashes hintereinander jeweils den ersten wegnehmen)
+    ' Beispiel fÃ¼r einen Aufruf:
+    ' (wÃ¼rde bei mehrfachen Backslashes hintereinander jeweils den ersten wegnehmen)
     ' result = RegExReplace(input, "\\(\\+)", "$1")
 
     'Dim re     As New RegExp
