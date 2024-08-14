@@ -71,7 +71,11 @@ Option Explicit
 ' === Main code / entry point
 '
 ' ============================================================================================
-Sub InsertCrossReference_(Optional isActiveState As Variant)
+Sub InsertCrossReference()
+'Private Sub test_InsertCrossReference()
+    Call InsertCrossReference_
+End Sub
+Function InsertCrossReference_(Optional isActiveState As Variant)
     ' Preparation:
     ' 1) Make sure, the following References are ticked in the VBA editor:
     '       - Microsoft VBScript Regular Expressions 5.5
@@ -110,32 +114,31 @@ Sub InsertCrossReference_(Optional isActiveState As Variant)
     ' 200902 Late binding is used to reference the RegExp-library ()
     ' 201112 Support for the \#0 switch
 
-    Static isActive As Boolean                  ' remember whether we are in insertion mode
+    Static isActive     As Boolean              ' remember whether we are in insertion mode
     Static cfgPHeadline As Integer              ' ptr to current config for Headlines
     Static cfgPBookmark As Integer              ' ptr to current config for Bookmarks
     Static cfgPFigureTE As Integer              ' ptr to current config for Figures, Tables, ...
 
-    Dim paramRefType As Variant                 ' type of reference (WdReferenceType)
-    Dim paramRefKind As Variant                 ' kind of reference (WdReferenceKind)
-    Dim paramRefText As Variant                 ' content of the field
-    Dim paramRefRnge As Range
-    Dim paramRefRnge0 As Range
-    Dim paramRefReal As String                  ' which of the three configurations
+    Dim paramRefType    As Variant              ' type of reference (WdReferenceType)
+    Dim paramRefKind    As Variant              ' kind of reference (WdReferenceKind)
+    Dim paramRefText    As Variant              ' content of the field
+    Dim novbCrLf        As String               ' dito, but w/o trailing CrLf
+    Dim paramRefRnge    As Range                ' range containing the reference
+    Dim paramRefReal    As String               ' which of the three configurations
 
-    Dim Response As Variant
-    Dim storeTrackStatus As Variant
-    Dim lastpos As Variant
-    Dim prompt As String
-    Dim retry As Boolean
-    Dim found As Boolean
-    Dim Index  As Variant
-    Dim myerrtxt As String
-    Dim linktype As Variant
-    Dim searchstring As String
-    Dim allowed As Boolean
-    Dim SEQLettering As String
-    Dim SEQCategory As String
-    Dim Codetext As String
+    Dim storeTracking   As Variant              ' temporarily remember the status of "TrackRevisions"
+    Dim prompt          As String               ' text for msgbox
+    Dim Response        As Variant              ' user's response to msgbox
+    Dim lastpos         As Variant
+    Dim retry           As Boolean
+    Dim found           As Boolean
+    Dim Index           As Variant
+    Dim linktype        As Variant
+    Dim searchstring    As String
+    Dim allowed         As Boolean
+    Dim SEQLettering    As String
+    Dim SEQCategory     As String
+    Dim Codetext        As String
     
     ' ============================================================================================
     ' === Configuration
@@ -256,8 +259,9 @@ Sub InsertCrossReference_(Optional isActiveState As Variant)
     Dim Config As Object
     Set Config = CreateObject("Scripting.Dictionary")
 
+    Set obj = Nothing
     On Error Resume Next
-    Set obj = ActiveDocument.VBProject.VBComponents("UF_PreferenceMgr")
+    Set obj = UserForms.Add("UF_PreferenceMgr")
     On Error GoTo 0
     If obj Is Nothing Then
         ' === There is *no* Preference Management.
@@ -292,7 +296,7 @@ Sub InsertCrossReference_(Optional isActiveState As Variant)
     Else
         ' === There *is* Preference Management.
         ' Let him do his initialisations:
-        obj.doInit
+        Call obj.doInit
 
         ' === Read configuration from registry into variables ====================================
         Dim arry() As Variant
@@ -351,10 +355,10 @@ Stop    ' not yet implemented
     End If
     
     
-    ActiveWindow.View.ShowFieldCodes = False
+    activeWindow.View.ShowFieldCodes = False
     
     'Debug.Print cfgPHeadline
-    ' Stelle, wo die Referenz eingefügt werden soll:
+    ' Where to insert the XRef:
     ' ============================================================================================
     ' === Check if we are in Insertion-Mode or not ===============================================
     If Not (isActive) Then
@@ -367,7 +371,7 @@ Stop    ' not yet implemented
         ' Special function: if the cursor is inside a wdFieldRef-field, then
         ' - toggle the display among the configured options
         ' - remember the new status for future inserts.
-        Index = CursorInField(Selection.Range) ' would fail, if .View.ShowFieldCodes = True
+        Index = CursorInField(selection.Range) ' would fail, if .View.ShowFieldCodes = True
         If Index <> 0 Then
             ' ====================================================================================
             ' ===== Toggle display:
@@ -393,7 +397,7 @@ Stop    ' not yet implemented
                     myRefType = wdRefTypeNumberedItem
                     'Debug.Print "Subtitle:", cfgPFigureTE, myOption
                     idx = MultifieldDelete(Config("cfgCrRf_ST_FormatA"), cfgPFigureTE, fText0, Index, needle, True)
-                    If idx = -1 Then Exit Sub
+                    If idx = -1 Then Exit Function
 
                     cfgPFigureTE = (idx + 1) Mod (UBound(Config("cfgCrRf_ST_FormatA")) + 1)
                     myOption = Config("cfgCrRf_ST_FormatA")(cfgPFigureTE)
@@ -410,7 +414,7 @@ Stop    ' not yet implemented
                     myRefType = wdRefTypeHeading
                     'Debug.Print "Headline:", cfgPHeadline, myOption
                     idx = MultifieldDelete(Config("cfgCrRf_Ch_FormatA"), cfgPHeadline, fText0, Index)
-                    If idx = -1 Then Exit Sub
+                    If idx = -1 Then Exit Function
 
                     cfgPHeadline = (idx + 1) Mod (UBound(Config("cfgCrRf_Ch_FormatA")) + 1)
                     myOption = Config("cfgCrRf_Ch_FormatA")(cfgPHeadline)
@@ -422,7 +426,7 @@ Stop    ' not yet implemented
                     myRefType = wdRefTypeBookmark
                     'Debug.Print "Bookmark:", cfgBookmark, myOption
                     idx = MultifieldDelete(Config("cfgCrRf_BM_FormatA"), cfgPBookmark, fText0, Index)
-                    If idx = -1 Then Exit Sub
+                    If idx = -1 Then Exit Function
 
                     cfgPBookmark = (idx + 1) Mod (UBound(Config("cfgCrRf_BM_FormatA")) + 1)
                     myOption = Config("cfgCrRf_BM_FormatA")(cfgPBookmark)
@@ -431,13 +435,13 @@ Stop    ' not yet implemented
                     'debug.print rgex(Trim(fText0), "(REF|PAGEREF)\s+(\S+)", "$2")
                     Call InsertCrossRefs(2, myOption, myRefType, fText2, fText2, True)
             End Select
-            Exit Sub                              ' Finished changing the display of the reference.
+            Exit Function                         ' Finished changing the display of the reference.
 
         Else
             ' ====================================================================================
             ' ===== Insert temporary Bookmark:
             ' Remember the current position within the document by putting a bookmark there:
-            ActiveDocument.Bookmarks.Add Name:="tempforInsert", Range:=Selection.Range
+            ActiveDocument.Bookmarks.Add name:="tempforInsert", Range:=selection.Range
             isActive = True             ' remember that we are in Insertion-Mode
 '            Call RibbonControl.setAButtonState("BtnTCrossRef", True)
         End If
@@ -451,12 +455,12 @@ Stop    ' not yet implemented
         ' ===== Find out the type of the element to cross-reference to.
         '       It could be a Headline, Figure, Bookmark, ...
         paramRefType = ""
-        Select Case Selection.Paragraphs(1).Range.ListFormat.ListType
+        Select Case selection.Paragraphs(1).Range.ListFormat.ListType
             Case wdListSimpleNumbering              ' bullet lists, numbered Elements
                 paramRefType = wdRefTypeNumberedItem
                 paramRefKind = wdNumberRelativeContext
-                paramRefText = Selection.Paragraphs(1).Range.ListFormat.ListString & _
-                               " " & Trim(Selection.Paragraphs(1).Range.text)
+                paramRefText = selection.Paragraphs(1).Range.ListFormat.ListString & _
+                               " " & Trim(selection.Paragraphs(1).Range.text)
                 paramRefText = Replace(paramRefText, Chr(13), "")
                 found = getXRefIndex(paramRefType, paramRefText, Index)
 
@@ -474,35 +478,35 @@ Stop    ' not yet implemented
                 Dim oDoc As Document
                 Dim oRange As Range
                 Set oDoc = ActiveDocument
-                Set oRange = oDoc.Range(Start:=Selection.Range.Start, End:=Selection.Range.End)
+                Set oRange = oDoc.Range(Start:=selection.Range.Start, End:=selection.Range.End)
                 'Debug.Print oRange.ListFormat.ListString
                 paramRefText = oRange.ListFormat.ListString
                 found = getXRefIndex(paramRefType, paramRefText, Index)
 
             Case wdListNoNumbering                  ' SEQ-numbered items, Bookmarks and Figure/Table/Equation/...
                 'paramRefText = Trim(Selection.Paragraphs(1).Range.text)
-                Set paramRefRnge = Selection.Paragraphs(1).Range
+                Set paramRefRnge = selection.Paragraphs(1).Range
                 paramRefText = Trim(paramRefRnge.text)
-                With Selection.Paragraphs(1)
+                With selection.Paragraphs(1)
                     ' There could be different fields. We look for the first of type <wdFieldSequence>:
-                    For i = 1 To .Range.Fields.Count
+                    For i = 1 To .Range.Fields.count
                         If .Range.Fields(i).Type = wdFieldSequence Then
                             Exit For
                         End If
                     Next
-                    If i > .Range.Fields.Count Then
+                    If i > .Range.Fields.count Then
                         paramRefType = ""
                         found = False
                         GoTo trybookmark
                     End If
                     Codetext = UnCAPS(.Range.Fields(i).Code)
                     If ((Left(Codetext, 8) = " SEQ Ref") And _
-                        (.Range.Bookmarks.Count = 1)) Then
+                        (.Range.Bookmarks.count = 1)) Then
                         ' == a) SEQ-numbered item, a bibliographic reference à la <[32] Jackson, 1939, page 37>:
                         paramRefType = wdRefTypeBookmark
                         paramRefKind = wdContentText
                         paramRefReal = "Bookmark"
-                        paramRefText = .Range.Bookmarks(1).Name
+                        paramRefText = .Range.Bookmarks(1).name
                         found = getXRefIndex(paramRefType, paramRefText, Index)
                     Else
                         ' Bookmark or Figure/Table/Equation/...
@@ -513,8 +517,10 @@ Stop    ' not yet implemented
                         SEQLettering = Replace(SEQLettering, Chr(30), "-")
                         'SEQLettering = Replace(SEQLettering, Chr(160), "")
                         ' Get the category:
-                        Set paramRefRnge = Selection.Paragraphs(1).Range
-                        SEQCategory = Trim(paramRefRnge.Fields(i).Code.Words(3))
+                        Set paramRefRnge = selection.Paragraphs(1).Range
+                        ' Extract the Category, e.g. in " SEQ Fig. \* ARABIC" that is "Fig.":
+                        'SEQCategory = Trim(paramRefRnge.Fields(i).Code.Words(3))
+                        SEQCategory = RegEx(paramRefRnge.Fields(i).Code, "\S+\s+(\S+)")
                         
                         ' Try to insert it as a Figure/Table/...
                         ' == b) Figure/Table/...
@@ -534,10 +540,10 @@ trybookmark:
                             Dim bmlen As Variant
                             Dim bmlen2 As Long
                             bmlen = ""
-                            For Each Element In Selection.Bookmarks
+                            For Each Element In selection.Bookmarks
                                 bmlen2 = Len(Element.Range.text)
                                 If bmlen2 < bmlen Or bmlen = "" Then
-                                    bname = Element.Name
+                                    bname = Element.name
                                     bmlen = Len(Element.Range.text)
                                 End If
                             Next
@@ -562,7 +568,7 @@ cannot:
             prompt = "Cannot cross reference to this location." & vbNewLine & "Try elsewhere or abort."
             Response = MsgBox(prompt, 1)
             If Response = vbCancel Then
-                Selection.GoTo what:=wdGoToBookmark, Name:="tempforInsert"
+                selection.GoTo what:=wdGoToBookmark, name:="tempforInsert"
                 If ActiveDocument.Bookmarks.Exists("tempforInsert") Then
                     ActiveDocument.Bookmarks.item("tempforInsert").Delete
                 End If
@@ -578,13 +584,13 @@ cannot:
 retryfinding:
         If (found = False) And (retry = False) Then
             ' Refresh, ohne dass es als Änderung getracked wird:
-            storeTrackStatus = ActiveDocument.TrackRevisions
+            storeTracking = ActiveDocument.TrackRevisions
             ActiveDocument.TrackRevisions = False
-            Selection.HomeKey Unit:=wdStory
+            selection.HomeKey Unit:=wdStory
 
             Do                                    ' alle SEQ-Felder abklappern
-                lastpos = Selection.End
-                Selection.GoTo what:=wdGoToField, Name:="SEQ"
+                lastpos = selection.End
+                selection.GoTo what:=wdGoToField, name:="SEQ"
                 'On Error Resume Next
                 Debug.Print "Err.Number = " & Err.Number
                 allowed = False
@@ -594,24 +600,36 @@ retryfinding:
                     If IsInArray(paramRefType, Config("cfgCrRf_ST_KeyWd")) Then
                         allowed = True
                         searchstring = " SEQ " & linktype
-                        If Left(Selection.NextField.Code.text, Len(searchstring)) = searchstring Then
-                            Selection.Fields.Update
+                        If Left(selection.NextField.Code.text, Len(searchstring)) = searchstring Then
+                            selection.Fields.Update
                         End If
                     End If
                 End If
                 If allowed = False Then
-                    MsgBox "We should never get here."
-                    Stop
+                    novbCrLf = RegEx(paramRefText, "([^\n\r]+)")
+                    prompt = "We cannot insert this cross reference." & vbCrLf & _
+                             vbCrLf & _
+                             "The cross reference tries to point to" & vbCrLf & _
+                             "   <" & novbCrLf & ">" & vbCrLf & _
+                             "and this seems to be an invalid reference." & vbCrLf & _
+                             "Please check the possibly invalid reference." & vbCrLf & _
+                             vbCrLf & _
+                             "Diagnostics data:" & vbCrLf & _
+                             "   paramRefType = <" & paramRefType & ">" & vbCrLf & _
+                             "   paramRefKind = <" & paramRefKind & ">" & vbCrLf & _
+                             "   paramRefText = <" & novbCrLf & ">"
+                    MsgBox prompt, vbOKOnly, "Error - Cannot insert cross reference"
+                    GoTo CleanExit
                 End If
 
-            Loop While (lastpos <> Selection.End)
+            Loop While (lastpos <> selection.End)
             retry = True
-            ActiveDocument.TrackRevisions = storeTrackStatus
+            ActiveDocument.TrackRevisions = storeTracking
             GoTo retryfinding
         End If
 
         ' Jetzt das eigentliche Einfügen des Querverweises an der ursprünglichen Stelle:
-        Selection.GoTo what:=wdGoToBookmark, Name:="tempforInsert"
+        selection.GoTo what:=wdGoToBookmark, name:="tempforInsert"
         If found = True Then
             ' Read the correct array the currently selected options:
             Select Case paramRefReal
@@ -631,11 +649,11 @@ retryfinding:
             If paramRefText = False Then
                 paramRefText = paramRefRnge.text
             End If
-            myerrtxt = ""
-            myerrtxt = vbCrLf & myerrtxt & "paramRefType = <" & paramRefType & ">" & _
-                       vbCrLf & myerrtxt & "paramRefKind = <" & paramRefKind & ">" & _
-                       vbCrLf & myerrtxt & "paramRefText = <" & paramRefText & ">"
-            MsgBox myerrtxt, vbOKOnly, "Error - Reference not found:"
+            prompt = ""
+            prompt = vbCrLf & prompt & "paramRefType = <" & paramRefType & ">" & _
+                     vbCrLf & prompt & "paramRefKind = <" & paramRefKind & ">" & _
+                     vbCrLf & prompt & "paramRefText = <" & paramRefText & ">"
+            MsgBox prompt, vbOKOnly, "Error - Reference not found:"
             Stop
         End If
 
@@ -650,46 +668,7 @@ retryfinding:
     End If 'If Not (isActive) Then
 CleanExit:
     isActiveState = CBool(isActive)
-End Sub
-Function UnCAPS(aInput As Variant) As String
-    Dim result As String
-    
-    aInput.Font.AllCaps = False
-    result = aInput.text
-    
-    UnCAPS = result
 End Function
-
-Private Sub ChangeFields()
-    Dim objDoc As Document
-    Dim objFld As Field
-    Dim sFldStr As String
-    Dim i As Long, lFldStart As Long
-
-    Set objDoc = ActiveDocument
-    ' Loop through fields in the ActiveDocument
-    For Each objFld In objDoc.Fields
-        ' If the field is a cross-ref, do something to it.
-        If objFld.Type = wdFieldRef Then
-            Debug.Print objFld.result.text
-GoTo skipsome
-            
-            
-            'Make sure the code of the field is visible. You could also just toggle this manually before running the macro.
-            objFld.ShowCodes = True
-            'I hate using Selection here, but it's probably the most straightforward way to do this. Select the field, find its start, and then move the cursor over so that it sits right before the 'R' in REF.
-            objFld.Select
-            Selection.Collapse wdCollapseStart
-            Selection.MoveStartUntil "R"
-            'Type 'PAGE' to turn 'REF' into 'PAGEREF'. This turns a text reference into a page number reference.
-            Selection.TypeText "PAGE"
-            'Update the field so the change is reflected in the document.
-            objFld.Update
-            objFld.ShowCodes = True
-skipsome:
-        End If
-    Next objFld
-End Sub
 
 'Sub trial()
 '    Dim thing As Variant
@@ -832,15 +811,15 @@ Function InsertCrossRefs(mode As Integer, _
             ' the last part was a text - like this the user can continue to toggle.
             ' Hence we have to move the cursor a bit back:
             If (moveCursor = True) And (Len(thePartOld) > 0) And (isCodeOld = False) Then
-                Selection.MoveLeft wdCharacter, Len(thePartOld)
+                selection.MoveLeft wdCharacter, Len(thePartOld)
             End If
             Exit Do
         End If
         
         ' If it's a text, insert it
         If isCode = False Then
-            Application.Selection.InsertAfter thepart
-            Application.Selection.Move wdCharacter, 1
+            Application.selection.InsertAfter thepart
+            Application.selection.Move wdCharacter, 1
         Else
         ' It is a code sequence:
             ' When we modify with method = <0>, we have received a fieldcode <refcode>.
@@ -920,15 +899,15 @@ Function Insert1CrossRef(mode As Integer, Optional param1 As Variant, _
                 .Code.text = " " & myCode & " "
                  
                  ' If the cursor is now behind the field, it must be moved back:
-                 If Selection.End > .result.End Then
-                     Selection.Move wdCharacter, -1
+                 If selection.End > .result.End Then
+                     selection.Move wdCharacter, -1
                  End If
-                 Selection.Fields.Update
+                 selection.Fields.Update
                  ' Now, the cursor will be exactly behind the field. That's fine.
                  
                  ' If the cursor is now in front of the field, it must be moved forward:
-                 If Selection.Start < .result.Start Then
-                     Selection.Start = .result.End
+                 If selection.Start < .result.Start Then
+                     selection.Start = .result.End
                  End If
             End With
             
@@ -998,15 +977,15 @@ Function Insert1CrossRef(mode As Integer, Optional param1 As Variant, _
 
             ' ===== Insert the cross reference, not all parameters might already be correct:
             '                                  RefType, RefKind, RefIndx, hyperlink,  position     sepNr , seperator
-            Call Selection.InsertCrossReference(param1, param0, param2, inclHyperlink, inclPosition, False, "")
+            Call selection.InsertCrossReference(param1, param0, param2, inclHyperlink, inclPosition, False, "")
             param3 = Replace(param3, "PAGEREF", "")
             param3 = Replace(param3, "REF", "")
             
             ' Make sure, the cursor is still in the field
             Do
-                idx = CursorInField(Selection.Range)
+                idx = CursorInField(selection.Range)
                 If idx <> 0 Then Exit Do
-                Selection.MoveLeft wdCharacter, 1
+                selection.MoveLeft wdCharacter, 1
             Loop While True
             
             
@@ -1022,13 +1001,13 @@ Function Insert1CrossRef(mode As Integer, Optional param1 As Variant, _
             'Application.StatusBar = "Cross Reference inserted of type <" & param3 & ">."
         
         Case 2              ' Insert new via .Fields.Add
-            Selection.Fields.Add Range:=Selection.Range, Type:=wdFieldEmpty, PreserveFormatting:=False
-            Selection.TypeText text:=Trim(param4)
-            Selection.Fields.Update
+            selection.Fields.Add Range:=selection.Range, Type:=wdFieldEmpty, PreserveFormatting:=False
+            selection.TypeText text:=Trim(param4)
+            selection.Fields.Update
 
             ' Put Cursor behind the new field:
-            Selection.Move wdCharacter, 1
-            Selection.Fields.Update
+            selection.Move wdCharacter, 1
+            selection.Fields.Update
             'Application.StatusBar = "Cross Reference inserted <" & param4 & ">."
         
         Case Else
@@ -1103,7 +1082,7 @@ Function MultifieldDelete(optionArray As Variant, _
             If j = -1 Then
                 ' Make sure, the Cursor is immediately behind the field:
                 ActiveDocument.Fields(Index).Update
-                Set myRange = Selection.Range
+                Set myRange = selection.Range
                 
                 ' If it is a multipart thingy, include the last text in our Range:
                 If isCode = False Then
@@ -1217,17 +1196,17 @@ Function MultifieldDelete(optionArray As Variant, _
     Dim LenCut As Long
     myRange.End = theEnd
     theStart = myRange.Start
-    LenStory = ActiveDocument.StoryRanges(wdMainTextStory).StoryLength
+    LenStory = ActiveDocument.StoryRanges(wdMainTextStory).storyLength
     LenCut = theEnd - theStart
     myRange.Cut
     ' Because Word may try to be smart by removing a lonely blank:
-    If Selection.Start < theStart Then
-        Selection.InsertBefore (" ")
-        Selection.Move wdCharacter, 1
+    If selection.Start < theStart Then
+        selection.InsertBefore (" ")
+        selection.Move wdCharacter, 1
     End If
-    If ActiveDocument.StoryRanges(wdMainTextStory).StoryLength < LenStory - LenCut Then
-        Selection.InsertAfter (" ")
-        Selection.Move wdCharacter, -1
+    If ActiveDocument.StoryRanges(wdMainTextStory).storyLength < LenStory - LenCut Then
+        selection.InsertAfter (" ")
+        selection.Move wdCharacter, -1
     End If
     
 End Function
@@ -1269,7 +1248,7 @@ Function strPrepare(string1 As String, Optional withBlanks As Boolean = True) As
         string1 = " " & Trim(string1) & " "
     Else
         string1 = Trim(string1)                                     ' Remove possible blanks at beginning & end
-        string1 = RegExReplace(string1, "[\r\n]+ *", "|")        ' Replace linebreak and single or multiple blanks after it by the divider "|"
+        string1 = RegExReplace(string1, "[\r\n]+ *", "|")           ' Replace linebreak and single or multiple blanks after it by the divider "|"
         'string1 =
     End If
     
@@ -1468,6 +1447,80 @@ Function getXRefIndex(RefType, text, Index As Variant) As Boolean
 
 End Function
 
+Function isSubtitle(bookmark As String, regexneedle As String) As Boolean
+    Dim thetext As String
+
+    isSubtitle = False
+    
+    If ActiveDocument.Bookmarks.Exists(bookmark) = False Then
+        Exit Function
+    End If
+    
+    thetext = ActiveDocument.Bookmarks(bookmark).Range.Paragraphs(1).Range.text
+    thetext = Replace(thetext, Chr(160), " ")
+    If RegEx(thetext, regexneedle) <> False Then
+        isSubtitle = True
+    End If
+    
+End Function
+
+Function ReplaceAbbrev(thestring) As Boolean
+    Dim rmatch As Variant
+    Dim needle As String
+    Dim repl As String
+    
+    ReplaceAbbrev = False
+    
+    needle = "(PAGEREF|P|REF|R)\b"          '\b is for word boundary
+    'needle = "(OKKLJLK|O|ZUI|Z)\b"
+    rmatch = RegEx(thestring, needle)
+    If rmatch = False Then
+        MsgBox "Expected keyword not found in <" & thestring & ">."
+        Exit Function
+    End If
+    
+    If Left(rmatch, 1) = "P" Then
+        repl = "PAGEREF"
+    Else
+        repl = "REF"
+    End If
+    thestring = RegExReplace(thestring, needle, repl)
+    thestring = Trim(thestring)
+    
+    ReplaceAbbrev = True
+    
+End Function
+
+Private Sub ChangeFields()
+    Dim objDoc As Document
+    Dim objFld As Field
+    Dim sFldStr As String
+    Dim i As Long, lFldStart As Long
+
+    Set objDoc = ActiveDocument
+    ' Loop through fields in the ActiveDocument
+    For Each objFld In objDoc.Fields
+        ' If the field is a cross-ref, do something to it.
+        If objFld.Type = wdFieldRef Then
+            Debug.Print objFld.result.text
+GoTo skipsome
+            'Make sure the code of the field is visible. You could also just toggle this manually before running the macro.
+            objFld.ShowCodes = True
+            'I hate using Selection here, but it's probably the most straightforward way to do this. Select the field, find its start, and then move the cursor over so that it sits right before the 'R' in REF.
+            objFld.Select
+            selection.Collapse wdCollapseStart
+            selection.MoveStartUntil "R"
+            'Type 'PAGE' to turn 'REF' into 'PAGEREF'. This turns a text reference into a page number reference.
+            selection.TypeText "PAGE"
+            'Update the field so the change is reflected in the document.
+            objFld.Update
+            objFld.ShowCodes = True
+skipsome:
+        End If
+    Next objFld
+End Sub
+
+
 
 
 ' ============================================================================================
@@ -1506,24 +1559,6 @@ Function CursorInField(theRange As Range) As Long
         End If
     Next
 End Function
-
-Function isSubtitle(bookmark As String, regexneedle As String) As Boolean
-    Dim thetext As String
-
-    isSubtitle = False
-    
-    If ActiveDocument.Bookmarks.Exists(bookmark) = False Then
-        Exit Function
-    End If
-    
-    thetext = ActiveDocument.Bookmarks(bookmark).Range.Paragraphs(1).Range.text
-    thetext = Replace(thetext, Chr(160), " ")
-    If RegEx(thetext, regexneedle) <> False Then
-        isSubtitle = True
-    End If
-    
-End Function
-
 
 ' ============================================================================================
 ' === Use of arrays
@@ -1679,18 +1714,18 @@ Function rgex(strInput As String, matchPattern As String, _
   End Select
 
   Set inputMatches = inputRegexObj.Execute(strInput)
-  If inputMatches.Count = 0 Then                  ' Nothing found
+  If inputMatches.count = 0 Then                  ' Nothing found
     rgex = False
-  ElseIf (ixi + 1 > inputMatches.Count) Then      ' There is no x-th match-group
+  ElseIf (ixi + 1 > inputMatches.count) Then      ' There is no x-th match-group
     rgex = False
   Else                                            ' Something was found
     rgex = ""
     sepr = ""
     If ixf = -1 Then                              ' Now we can determine, how many matches to return
-      ixf = inputMatches.Count - 1
+      ixf = inputMatches.count - 1
       ' Outputformat will be: "{Nr of results}|{Result 1}|{Result 2}|..|{Result N}"
       sepr = "|"
-      rgex = CStr(inputMatches.Count)
+      rgex = CStr(inputMatches.count)
     End If
     
     ' Reduce results to the requested match-group:
@@ -1704,7 +1739,7 @@ Function rgex(strInput As String, matchPattern As String, _
         If replaceNumber = 0 Then
           outputres = outReplaceRegexObj.Replace(outputPattern, inputMatches(ix).value)
         Else
-          If replaceNumber > inputMatches(ix).submatches.Count Then
+          If replaceNumber > inputMatches(ix).submatches.count Then
             'rgex = "A to high $ tag found. Largest allowed is $" & inputMatches(0).SubMatches.Count & "."
             rgex = Error 'CVErr(vbErrValue)
             Exit Function
@@ -1735,7 +1770,7 @@ Function GetPart(thestring, thePosition, Optional ByRef isCode As Boolean) As Va
     Set extract = re.Execute(thestring)
     
     ' 2) Check if the index is out of bounds:
-    If Abs(thePosition) > extract.Count Then
+    If Abs(thePosition) > extract.count Then
         thePosition = 0
         GetPart = ""
         Exit Function
@@ -1746,7 +1781,7 @@ Function GetPart(thestring, thePosition, Optional ByRef isCode As Boolean) As Va
     End If
     If thePosition < 0 Then
         ' Find from behind
-        idx = extract.Count + thePosition
+        idx = extract.count + thePosition
     Else
         idx = thePosition - 1
     End If
@@ -1768,33 +1803,6 @@ Function GetPart(thestring, thePosition, Optional ByRef isCode As Boolean) As Va
         isCode = Not (isCode)
     End If
         
-End Function
-
-Function ReplaceAbbrev(thestring) As Boolean
-    Dim rmatch As Variant
-    Dim needle As String
-    Dim repl As String
-    
-    ReplaceAbbrev = False
-    
-    needle = "(PAGEREF|P|REF|R)\b"          '\b is for word boundary
-    'needle = "(OKKLJLK|O|ZUI|Z)\b"
-    rmatch = RegEx(thestring, needle)
-    If rmatch = False Then
-        MsgBox "Expected keyword not found in <" & thestring & ">."
-        Exit Function
-    End If
-    
-    If Left(rmatch, 1) = "P" Then
-        repl = "PAGEREF"
-    Else
-        repl = "REF"
-    End If
-    thestring = RegExReplace(thestring, needle, repl)
-    thestring = Trim(thestring)
-    
-    ReplaceAbbrev = True
-    
 End Function
 
 
@@ -1874,6 +1882,17 @@ Function strRemoveComments(string1) As String
     strRemoveComments = string1
 End Function
 
+Function UnCAPS(aInput As Variant) As String
+    Dim result As String
+    
+    aInput.Font.AllCaps = False
+    result = aInput.text
+    
+    UnCAPS = result
+End Function
+
 ' ============================================================================================
+'
 ' === The end
+'
 ' ============================================================================================
