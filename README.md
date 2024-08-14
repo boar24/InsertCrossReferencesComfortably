@@ -69,14 +69,3 @@ Recommendation for quickly jumping to headlines in large documents: use the navi
 ## Limitations:
   * Cross references to hidden text are not possible  
   * The macro may fail trying to cross reference to locations that have heavily been edited (deletions / moves) with "track changes" (markup mode) turned on.   
-
-## Revision History:  
-* 151204 Beginn der Revision History  
-* 160111 Kann jetzt auch umgehen mit Numerierungen mit Bindestrich à la "Figure 1-1"  
-* 160112 Jetzt auch Querverweise möglich auf Dokumentenreferenzen à la "[66]" mit Feld " SEQ Ref "  
-* 160615 Felder werden upgedatet falls nötig  
-* 180710 Support für "Nummeriertes Element"  
-* 181026 Generischerer Code für Figure¦Table¦Abbildung  
-* 190628 New function: toggle to insert numeric or text references ("\r")  
-* 190629 Explanations and UI changed to English  
-* 190709 Expanded configuration possibilities due to intermediate text sequences
