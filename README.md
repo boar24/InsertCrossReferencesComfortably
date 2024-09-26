@@ -67,5 +67,7 @@ Recommendation for quickly jumping to headlines in large documents: use the navi
    - Subsequently added cross references will use the latest format (persistent until Word is exited).  
   
 ## Limitations:
-  * Cross references to hidden text are not possible  
-  * The macro may fail trying to cross reference to locations that have heavily been edited (deletions / moves) with "track changes" (markup mode) turned on.   
+  * Cross references to hidden text are not possible.
+  * The macro may fail trying to cross reference to locations that have heavily been edited (deletions / moves) with "track changes" (markup mode) turned on.
+  * The macro cannot run on MacOS (see https://github.com/boar24/InsertCrossReferencesComfortably/issues/3).
+  * Cross references must be plain inside the document body, but cannot be within textboxes (see https://github.com/boar24/InsertCrossReferencesComfortably/issues/4).
