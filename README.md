@@ -61,7 +61,7 @@ Recommendation for quickly jumping to headlines in large documents: use the navi
    The cursor will jump back to the location of insertion and the crossref will be inserted. <br>
    Done!  
 4) Additional function:  <br>
-   Positon the cursor at a cross reference field (if you have configured chained cross reference fields, put the cursor to the last field in the chain).<br> 
+   Position the cursor at a cross reference field (if you have configured chained cross reference fields, put the cursor to the _last_ field in the chain).<br> 
    Press the keyboard shortcut.<br>
    - The field display toggles to the next configured option, e.g. from _see Chapter 1_ to _cf. Introduction_.
    - Subsequently added cross references will use the latest format (persistent until Word is exited).  
